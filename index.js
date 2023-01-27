@@ -4,7 +4,10 @@ const axios = require('axios');
 const moment = require('moment');
 const momentTZ = require('moment-timezone');
 const dotenv = require('dotenv');
+const cron = require('node-cron');
+
 dotenv.config();
+const activeLogs = JSON.parse(process.env.LOGS)
 const notion = new Client({ auth: process.env.NOTION_AUTH })
 const notionDatabaseId = process.env.NOTION_DB_ID;
 const botTelegramConfig = {
@@ -37,7 +40,7 @@ const mangaForNotionUpdate = [{
     value: ''
     }];
 const main = async () => {
-    console.log('************START***************');
+    if (activeLogs) console.log('************START***************');
     try {       
         const listConfigNotion = await getPostsFromNotionDatabase();
         listConfigNotion.forEach(page => {
@@ -72,8 +75,8 @@ const main = async () => {
             }
             throw Error(response);
         }
-        console.log('Not yet!!!');
-        console.log('************END***************');
+        if (activeLogs) console.log('Not yet!!!');
+        if (activeLogs) console.log('************END*****************');
     } catch (ex) {
         if (ex.response?.status === 404) {
             console.log('sorry, try later');
@@ -148,5 +151,15 @@ const updateMangaNro = async () => {
     console.log(`Nro Manga changed`)
 }
 
-main();
+cron.schedule(process.env.CRON_SCHEDULE, function () {
+    if (activeLogs) {
+    console.log('----------------------------------');
+    console.log(`|           SERVICE UP!!         |`);
+    console.log(`| UP FROM :${momentTZ().tz(dateConfig.timeZone).toString() } |`);
+    console.log('----------------------------------');
+    }
+    main();
+});
+
+
 
