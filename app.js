@@ -4,9 +4,12 @@ const axios = require('axios');
 const moment = require('moment');
 const momentTZ = require('moment-timezone');
 const dotenv = require('dotenv');
-const cron = require('node-cron');
-
 dotenv.config();
+
+const express = require("express");
+const cors = require("cors");
+const app = express();
+
 const activeLogs = JSON.parse(process.env.LOGS)
 const notion = new Client({ auth: process.env.NOTION_AUTH })
 const notionDatabaseId = process.env.NOTION_DB_ID;
@@ -38,10 +41,10 @@ const mangaForNotionUpdate = [{
     id: '',
     key: 'number_until',
     value: ''
-    }];
+}];
 const main = async () => {
     if (activeLogs) console.log('************START***************');
-    try {       
+    try {
         const listConfigNotion = await getPostsFromNotionDatabase();
         listConfigNotion.forEach(page => {
             mangaListConfig[page.key] = page.value;
@@ -57,7 +60,7 @@ const main = async () => {
         const now = momentTZ().tz(dateConfig.timeZone);
         const initHour = moment(now).hour(dateConfig.initHour);
         const endHour = moment(now).hour(dateConfig.endHour);
-        const range = now.isBetween(initHour, endHour);       
+        const range = now.isBetween(initHour, endHour);
         if (now.weekday() === dateConfig.day && range) {
             const axiosConfigTonarinoyj = {
                 url: 'https://tonarinoyj.jp/api/viewer/readable_products',
@@ -151,15 +154,34 @@ const updateMangaNro = async () => {
     console.log(`Nro Manga changed`)
 }
 
-cron.schedule(process.env.CRON_SCHEDULE, function () {
-    if (activeLogs) {
-    console.log('----------------------------------');
-    console.log(`|           SERVICE UP!!         |`);
-    console.log(`| UP FROM :${momentTZ().tz(dateConfig.timeZone).toString() } |`);
-    console.log('----------------------------------');
-    }
-    main();
+const allOptions = {
+    method: ["GET"],
+    credentials: true,
+    allowedHeaders: "X-Requested-With,content-type, resources",
+    exposedHeaders: "resources",
+    origin: "*",
+};
+
+app.use('/health', cors(allOptions), (req, res) => {
+    res.status = 200;
+    res.json({ message: 'ok!' });
 });
 
+app.use('/haveManga', cors(allOptions), (req, res) => {
+    main();
+    res.json();
+});
+
+
+app.set('port', process.env.PORT);
+app.listen(app.get('port'), () => {
+    if (activeLogs) {
+        console.log('----------------------------------');
+        console.log(`|           PORT ${app.get("port")}           |`);
+        console.log(`|           SERVICE UP!!         |`);
+        console.log(`| UP FROM :${momentTZ().tz(dateConfig.timeZone).toString()} |`);
+        console.log('----------------------------------');
+    }
+});
 
 
