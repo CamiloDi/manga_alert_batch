@@ -152,6 +152,7 @@ const updateMangaNro = async () => {
 }
 
 cron.schedule(process.env.CRON_SCHEDULE, function () {
+    console.log(process.env.LOGS);
     if (activeLogs) {
     console.log('----------------------------------');
     console.log(`|           SERVICE UP!!         |`);
