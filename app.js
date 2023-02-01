@@ -19,12 +19,8 @@ const botTelegramConfig = {
     botGroup: process.env.BOT_GROUP
 };
 const dateConfig = {
-    day: parseInt(process.env.DAY),
-    initHour: parseInt(process.env.INIT_HOUR),
-    endHour: parseInt(process.env.END_HOUR),
     timeZone: process.env.TIME_ZONE,
 };
-
 const mangaListConfig = {
     aggregate_id: '13932016480028984490',
     number_since: 0,
@@ -44,6 +40,7 @@ const mangaForNotionUpdate = [{
 }];
 const main = async () => {
     if (activeLogs) console.log('************START***************');
+    if (activeLogs) console.log(momentTZ().tz(dateConfig.timeZone).format('DD-MM-YYYY HH:mm:ss'));
     try {
         const listConfigNotion = await getPostsFromNotionDatabase();
         listConfigNotion.forEach(page => {
@@ -57,11 +54,6 @@ const main = async () => {
                 mangaForNotionUpdate[1].value = page.value
             }
         });
-        const now = momentTZ().tz(dateConfig.timeZone);
-        const initHour = moment(now).hour(dateConfig.initHour);
-        const endHour = moment(now).hour(dateConfig.endHour);
-        const range = now.isBetween(initHour, endHour);
-        if (now.weekday() === dateConfig.day && range) {
             const axiosConfigTonarinoyj = {
                 url: 'https://tonarinoyj.jp/api/viewer/readable_products',
                 method: 'get',
@@ -77,15 +69,14 @@ const main = async () => {
                 return;
             }
             throw Error(response);
-        }
-        if (activeLogs) console.log('Not yet!!!');
-        if (activeLogs) console.log('************END*****************');
     } catch (ex) {
         if (ex.response?.status === 404) {
             console.log('sorry, try later');
+            if (activeLogs) console.log('************END*****************');
         }
         else {
             console.log('sorry, we have a error', ex);
+            if (activeLogs) console.log('************END*****************');
         }
     }
 };
@@ -117,7 +108,7 @@ const getPostsFromNotionDatabase = async () => {
     catch (ex) {
         throw new Error(ex);
     }
-}
+};
 
 const updatePostsToNotionDatabase = async (page) => {
     await notion.pages.update({
@@ -126,7 +117,7 @@ const updatePostsToNotionDatabase = async (page) => {
             value: { rich_text: [{ type: "text", text: { content: page.value } }] },
         }
     })
-}
+};
 
 //Telegram message
 const sendMessageTelegram = async (message) => {
@@ -152,7 +143,7 @@ const updateMangaNro = async () => {
         updatePostsToNotionDatabase(page);
     });
     console.log(`Nro Manga changed`)
-}
+};
 
 const allOptions = {
     method: ["GET"],
@@ -169,9 +160,8 @@ app.use('/health', cors(allOptions), (req, res) => {
 
 app.use('/haveManga', cors(allOptions), (req, res) => {
     main();
-    res.json();
+    res.json({ message: 'ok!' });
 });
-
 
 app.set('port', process.env.PORT);
 app.listen(app.get('port'), () => {
@@ -179,7 +169,7 @@ app.listen(app.get('port'), () => {
         console.log('----------------------------------');
         console.log(`|           PORT ${app.get("port")}           |`);
         console.log(`|           SERVICE UP!!         |`);
-        console.log(`| UP FROM :${momentTZ().tz(dateConfig.timeZone).toString()} |`);
+        console.log(`| UP FROM :${momentTZ().tz(dateConfig.timeZone).format('DD-MM-YYYY HH:mm:ss')} |`);
         console.log('----------------------------------');
     }
 });
