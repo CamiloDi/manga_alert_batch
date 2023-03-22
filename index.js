@@ -66,10 +66,10 @@ const main = async () => {
             }
             const response = await axios(axiosConfigTonarinoyj);
             if (response.status === 200) {
-                console.log('good!, We have a new episode!');
-                sendMessageTelegram(
-                    `good!!!!, We have a new episode! ${emoji.get('punch')}${emoji.get('bald_person')}
-                https://tonarinoyj.jp/episode/316190247133138894`)
+                console.log('Good!, We have a new episode!');
+                const newMessage = formatUrlManga(response.data.html);
+                if (JSON.parse(process.env.SEND_MESSAGE_DISCORD)) sendMessageDiscord(newMessage)
+                sendMessageTelegram(newMessage)
                 updateMangaNro();
                 return;
             }
@@ -141,6 +141,37 @@ const sendMessageTelegram = async (message) => {
         throw ex;
     }
 };
+
+//Discord message
+const sendMessageDiscord = async (message) => {
+    try {
+        const axiosDiscord = {
+            url: process.env.URL_WEBHOOK,
+            method: 'post',
+            data: {
+                embeds: [{
+                    title: 'ALERT!!',
+                    description: message,
+                    color: '45973'
+                }]
+            }
+        }
+        await axios(axiosDiscord);
+    } catch (ex) {
+        throw ex;
+    }
+};
+
+//formatMessage
+const formatUrlManga = (html) => {
+    const removeN = html.replace(/\n/g, '');
+    const removeHref = removeN.split('href="')[1];
+    let urlManga = removeHref.split('"')[0];
+    urlManga = urlManga ? urlManga : process.env.URL_MANGA_BASE;
+    return `Good!!!!, We have a new episode! ${emoji.get('punch')}${emoji.get('bald_person')}
+                ${urlManga}`
+}
+
 
 //Update data for Notion
 const updateMangaNro = async () => {
