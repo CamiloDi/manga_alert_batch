@@ -26,7 +26,7 @@ exports.timeZoneDate = () => {
 
 // Upload new manga
 exports.uploadNewManga = (html, chapter) => {
-    return html.toString().includes(`Chapter ${chapter}`)
+    return html.toString().includes(`chapter ${chapter}`)
 };
 
 exports.getUrlImagesList = (htmlPage) => {

@@ -38,6 +38,7 @@ exports.uploadManga = async (req, res, next) => {
                             });
                         } else {
                             sendMessageTelegram(`Manga Succesful upload to Google Drive! ${emoji.get('punch')}${emoji.get('bald_person')}`);
+                            sendMessageTelegram(process.env.GOOGLE_DRIVE_FOLDER_URL);
                             mangaUpdateFlag[1].value = 'false';
                             updateMangaNro(mangaUpdateFlag);
                             console.log('Successful upload chapter!')
@@ -72,12 +73,11 @@ const uploadAllImages = async (urlList, id, driveClient) => {
             if (activeLogs) console.log(`Call Page nro ${index}`, timeZoneDate());
             const responseImage = await getMangaImage(url);
             await uploadFile(`${index}`, responseImage, MANGA_UPLOAD_CONFIG.imageType, id, driveClient);
-            return Promise.resolve();
         } catch (err) {
             if (activeLogs) console.log(`Page nro ${index} have error!: `);
             if (activeLogs) console.error(err);
-            return Promise.reject({ err, index });
         }
+        return Promise.resolve();
     });
     return Promise.allSettled(promises);
 }
